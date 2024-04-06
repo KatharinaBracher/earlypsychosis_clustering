@@ -13,13 +13,15 @@ import scikit_posthocs as sci_posthocs
 subj_data = pd.read_csv('../data/subj_description.txt', index_col=0)
 
 def load_data(path):
-    brain_data = pd.read_csv(path +'/brain_data.txt', index_col=0)
+    # brain_data = pd.read_csv(path +'/brain_data.txt', index_col=0)
     cog_data = pd.read_csv(path +'/cog_data.txt', index_col=0)
     subj_data = pd.read_csv(path +'/subj_description.txt', index_col=0)
-    return brain_data, cog_data, subj_data
+    #return brain_data, cog_data, subj_data
+    return cog_data, subj_data
 
 
 def get_group_data(data, group, brain=False, corr=False, subj=False):
+    subj_data = pd.read_csv('../data/subj_description.txt', index_col=0)
     if brain:
         data = data.loc[subj_data['phenotype_description']==group]
     else:
@@ -64,6 +66,7 @@ def group_comparison(data, col_df, cluster=False, control=False):
         data_0 = get_cluster_data(data, 0)
         data_1 = get_cluster_data(data, 1)
         data_2 = get_cluster_data(data, 2)
+        data_3 = get_cluster_data(data, 3)
         df_comparison = pd.DataFrame({'test': ['group', '0-1', '0-2', '1-2']}).set_index('test')
         
     else:
@@ -88,6 +91,36 @@ def group_comparison(data, col_df, cluster=False, control=False):
 
         else:
             comp.extend(['-', '-', '-'])
+
+        df_comparison[column] = comp
+    return df_comparison
+
+def group_comparison_4cluster(data, col_df):
+    data_0 = get_cluster_data(data, 0)
+    data_1 = get_cluster_data(data, 1)
+    data_2 = get_cluster_data(data, 2)
+    data_3 = get_cluster_data(data, 3)
+    df_comparison = pd.DataFrame({'test': ['group', '0-1', '0-2', '0-3', '1-2', '1-3', '2-3']}).set_index('test')
+
+    for column in col_df:
+        comp = []
+        group = sci.stats.kruskal(removenan(data_0[column].values), 
+                                  removenan(data_1[column].values), 
+                                  removenan(data_2[column].values),
+                                  removenan(data_3[column].values))
+        comp.append([round(group[0],4), round(group[1],4)])
+
+        if group[1] <= 0.05:
+            posthoc = sci_posthocs.posthoc_dunn([data_0[column], data_1[column], data_2[column], data_3[column]])
+            comp.append([round(sci.stats.kruskal(removenan(data_0[column].values), removenan(data_1[column].values))[0],4), round(posthoc[1][2],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_0[column].values), removenan(data_2[column].values))[0],4), round(posthoc[1][3],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_0[column].values), removenan(data_3[column].values))[0],4), round(posthoc[1][4],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_1[column].values), removenan(data_2[column].values))[0],4), round(posthoc[2][3],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_1[column].values), removenan(data_3[column].values))[0],4), round(posthoc[2][4],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_2[column].values), removenan(data_3[column].values))[0],4), round(posthoc[3][4],4)])
+
+        else:
+            comp.extend(['-', '-', '-', '-', '-', '-'])
 
         df_comparison[column] = comp
     return df_comparison
@@ -118,6 +151,42 @@ def group_comparison_control(data, col_df):
 
         else:
             comp.extend(['-', '-', '-', '-', '-', '-'])
+
+        df_comparison[column] = comp
+    return df_comparison
+
+def group_comparison_control_4cluster(data, col_df):
+    data_0 = get_cluster_data(data, 0)
+    data_1 = get_cluster_data(data, 1)
+    data_2 = get_cluster_data(data, 2)
+    data_3 = get_cluster_data(data, 2)
+    data_c = get_cluster_data(data, 'c')
+    df_comparison = pd.DataFrame({'test': ['group', '0-1', '0-2', '0-3', '0-c', '1-2', '1-3', '1-c', '2-3', '2-c', '3-c']}).set_index('test')
+
+    for column in col_df:
+        comp = []
+        group = sci.stats.kruskal(removenan(data_0[column].values), 
+                                  removenan(data_1[column].values), 
+                                  removenan(data_2[column].values),
+                                  removenan(data_3[column].values),
+                                  removenan(data_c[column].values))
+        comp.append([round(group[0],4), round(group[1],4)])
+
+        if group[1] <= 0.05:
+            posthoc = sci_posthocs.posthoc_dunn([data_0[column], data_1[column], data_2[column], data_3[column], data_c[column]])
+            comp.append([round(sci.stats.kruskal(removenan(data_0[column].values), removenan(data_1[column].values))[0],4), round(posthoc[1][2],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_0[column].values), removenan(data_2[column].values))[0],4), round(posthoc[1][3],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_0[column].values), removenan(data_3[column].values))[0],4), round(posthoc[1][4],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_0[column].values), removenan(data_c[column].values))[0],4), round(posthoc[1][5],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_1[column].values), removenan(data_2[column].values))[0],4), round(posthoc[2][3],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_1[column].values), removenan(data_3[column].values))[0],4), round(posthoc[2][4],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_1[column].values), removenan(data_c[column].values))[0],4), round(posthoc[2][5],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_2[column].values), removenan(data_3[column].values))[0],4), round(posthoc[3][4],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_2[column].values), removenan(data_c[column].values))[0],4), round(posthoc[3][5],4)])
+            comp.append([round(sci.stats.kruskal(removenan(data_3[column].values), removenan(data_c[column].values))[0],4), round(posthoc[4][5],4)])
+
+        else:
+            comp.extend(['-', '-', '-', '-', '-', '-', '-', '-', '-', '-'])
 
         df_comparison[column] = comp
     return df_comparison
@@ -162,12 +231,14 @@ def get_partition(data, max_cluster):
 
 def calculate_cluster_stats(results, subj_data, patients_only=False):
     comparison = pd.DataFrame(subj_data['phenotype_description'])
+    if patients_only:
+        comparison = comparison[comparison.phenotype_description != 0]
     comparison['cluster'] = results
     df = comparison.groupby(['phenotype_description', 'cluster']).size().unstack(fill_value=0)
     if not patients_only:
-        df.loc[0] = df.loc[0].div(46)  # control
-    df.loc[1] = df.loc[1].div(25)  # affective
-    df.loc[2] = df.loc[2].div(84)  # nonaffective
+        df.loc[0] = df.loc[0].div(56)  # control
+    df.loc[1] = df.loc[1].div(52)  # affective
+    df.loc[2] = df.loc[2].div(118)  # nonaffective
     return df
 
 def K_Means(data, k, subj_data=subj_data, patients_only=False):
@@ -181,7 +252,7 @@ def Spectral(data, k, subj_data=subj_data, patients_only=False):
     spectral_predict = model.fit_predict(data)
     return spectral_predict, calculate_cluster_stats(spectral_predict, subj_data, patients_only)
     
-def Fuzzy(data, k, subj_data=subj_data, patients_only=False, random_state=2023):
+def Fuzzy(data, k, subj_data=subj_data, patients_only=False, random_state=2026):
     model = FCM(n_clusters=k, random_state=random_state) 
     model.fit(data) 
     centers = model.centers

@@ -3,3 +3,14 @@ __pycache__
 
 _clustering_test.ipynb
 _FA_test.ipynb
+_FA_brain.ipynb
+_old_clustering.ipynb
+_dataframe_old.ipynb
+_data_withbrain.ipynb
+
+collected_data-csv
+clu_med_corr.csv
+clu_results_cog_all.csv
+
+fig
+clu_results
